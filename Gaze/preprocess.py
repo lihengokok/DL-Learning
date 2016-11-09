@@ -17,10 +17,8 @@ validation_lmdb = 'syn_validation_lmdb'
 def transform_img(img, img_width=IMAGE_WIDTH, img_height=IMAGE_HEIGHT):
 
     #Histogram Equalization
-    img[:, :, 0] = cv2.equalizeHist(img[:, :, 0])
-    img[:, :, 1] = cv2.equalizeHist(img[:, :, 1])
-    img[:, :, 2] = cv2.equalizeHist(img[:, :, 2])
-
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.normalize(img, img, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
     #Image Resizing
     img = cv2.resize(img, (img_width, img_height), interpolation = cv2.INTER_CUBIC)
 
@@ -43,13 +41,13 @@ def gazeToEul(gaze):
 os.system('rm -rf  ' + train_lmdb)
 os.system('rm -rf  ' + validation_lmdb)
 
-f = h5py.File("testfilet.hdf5", "w")
-dset = f.create_dataset("data", (2000, 3, IMAGE_WIDTH, IMAGE_HEIGHT), dtype='i', chunks=True)
+f = h5py.File("testfile_11_9_v3.hdf5", "w")
+dset = f.create_dataset("data", (2000, 1, IMAGE_HEIGHT, IMAGE_WIDTH), dtype='f8', chunks=True)
 lset = f.create_dataset("label", (2000, 4), dtype='f8', chunks=True)
 print dset.shape, dset.size
 
 
-train_data = [img for img in glob.glob("f02/*.png")]
+train_data = [img for img in glob.glob("f01/*.png")]
 
 print 'Creating hdf5'
 
@@ -57,13 +55,18 @@ print 'Creating hdf5'
 for idx, img_path in enumerate(train_data):
     img = cv2.imread(img_path)
     img = transform_img(img)
-    img = np.rot90(img)
+    #img = np.rot90(img)
+    img = np.expand_dims(img, axis=2)
     img = np.rollaxis(img, 2)
+    #print img.shape
+    #break
+  
 
     
 
     # Read pkl
     pkl_path = img_path[:-3] + "pkl"
+    print pkl_path
     pkl_input = open(pkl_path, 'rb')
     labelDict = pickle.load(pkl_input)
 
@@ -76,10 +79,12 @@ for idx, img_path in enumerate(train_data):
     gaze = (gaze_theta, gaze_phi)
 
     # concate label
-    label = [gaze_theta, gaze_phi, head_theta, head_phi]
-    #print label
+    label = [[gaze_theta, head_theta], [gaze_phi, head_phi]]
     # print label.shape
     # put data
+    label = [gaze_theta,gaze_phi,head_theta,head_phi]
+    label = np.array(label)
+    print label
     f['data'][idx] = img
     f['label'][idx] = label
 

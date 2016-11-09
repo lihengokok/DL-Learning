@@ -12,7 +12,6 @@ layers {
   include: { phase: TRAIN }
 }
 
-
 layers {
   name: "test_data"
   type: HDF5_DATA
@@ -33,7 +32,7 @@ layers {
   top: "gaze"
   top: "headpose"
   slice_param {
-    axis: 1
+    slice_dim: 1
     slice_point: 2
   }
 }
@@ -137,7 +136,6 @@ layers {
   top: "cat"
 }
 
-
 layers {
   name: "ip2"
   type: INNER_PRODUCT
@@ -155,6 +153,7 @@ layers {
     }
   }
 }
+
 layers {
   name: "accuracy"
   type: ACCURACY
