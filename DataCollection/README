@@ -1,0 +1,8 @@
+Image format in HDF5:
+1. Greyscale
+2. Dimension: 1 X 80 X 120
+3. Label [gaze_theta, gaze_phi, head_theta, head_phi]
+
+HDF5 File:
+
+2000 data entries
