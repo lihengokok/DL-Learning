@@ -33,59 +33,69 @@ def headPoseMatrixToEul(head_pose):
 def gazeToEul(gaze):
     return np.arcsin(gaze[1] * -1), np.arctan2(gaze[0] * -1, gaze[2] * -1)
 
-
-
-
-os.system('rm -rf  ' + train_lmdb)
-os.system('rm -rf  ' + validation_lmdb)
-
-f = h5py.File("testfile_11_9_v3.hdf5", "w")
-dset = f.create_dataset("data", (2000, 1, IMAGE_HEIGHT, IMAGE_WIDTH), dtype='f8', chunks=True)
-lset = f.create_dataset("label", (2000, 4), dtype='f8', chunks=True)
-print dset.shape, dset.size
-
-
-train_data = [img for img in glob.glob("f01/*.png")]
+rootdir = "SynthEyes_data"
+hdf5prefix = "syntheyes_"
+fileSize = 2000
+fileCounter = 0
+idx = 0
 
 print 'Creating hdf5'
+f = h5py.File(hdf5prefix + str(fileCounter) + ".hdf5", "w")
+dset = f.create_dataset("data", (2000, 1, IMAGE_HEIGHT, IMAGE_WIDTH), dtype='f8', chunks=True)
+lset = f.create_dataset("label", (2000, 4), dtype='f8', chunks=True)            
+for subdir, dirs, files in os.walk(rootdir):
+
+    for file in files:
+        if file[-3:] != 'png':
+            continue
+        ###
+        # Save Data
+        ###    
+
+        img_path = subdir + "\\" +  file
+        img = cv2.imread(img_path)
+        img = transform_img(img)
+        img = np.expand_dims(img, axis=2)
+        img = np.rollaxis(img, 2)
+
+        # Read pkl
+        pkl_path = img_path[:-3] + "pkl"
+        pkl_input = open(pkl_path, 'rb')
+        labelDict = pickle.load(pkl_input)
+
+        # Convert Head Pose to Eul
+        head_theta, head_phi = headPoseMatrixToEul(np.array(labelDict['head_pose']))
+        head_pose = (head_theta, head_phi)
+        
+        # Conver Gaze to Eul
+        gaze_theta, gaze_phi = gazeToEul(np.array(labelDict['look_vec']))
+        gaze = (gaze_theta, gaze_phi)
+
+        # concate label
+        label = [[gaze_theta, head_theta], [gaze_phi, head_phi]]
+        # print label.shape
+        # put data
+        label = [gaze_theta,gaze_phi,head_theta,head_phi]
+        label = np.array(label)
+        f['data'][idx] = img
+        f['label'][idx] = label
+
+        idx += 1
+
+        if idx == fileSize:
+            idx = 0
+            fileCounter += 1
+            print "Newfile" + str(fileCounter)
+            f = h5py.File(hdf5prefix + str(fileCounter) + ".hdf5", "w")
+            dset = f.create_dataset("data", (2000, 1, IMAGE_HEIGHT, IMAGE_WIDTH), dtype='f8', chunks=True)
+            lset = f.create_dataset("label", (2000, 4), dtype='f8', chunks=True)
 
 
-for idx, img_path in enumerate(train_data):
-    img = cv2.imread(img_path)
-    img = transform_img(img)
-    #img = np.rot90(img)
-    img = np.expand_dims(img, axis=2)
-    img = np.rollaxis(img, 2)
-    #print img.shape
-    #break
-  
+
+
+
 
     
-
-    # Read pkl
-    pkl_path = img_path[:-3] + "pkl"
-    print pkl_path
-    pkl_input = open(pkl_path, 'rb')
-    labelDict = pickle.load(pkl_input)
-
-    # Convert Head Pose to Eul
-    head_theta, head_phi = headPoseMatrixToEul(np.array(labelDict['head_pose']))
-    head_pose = (head_theta, head_phi)
-    
-    # Conver Gaze to Eul
-    gaze_theta, gaze_phi = gazeToEul(np.array(labelDict['look_vec']))
-    gaze = (gaze_theta, gaze_phi)
-
-    # concate label
-    label = [[gaze_theta, head_theta], [gaze_phi, head_phi]]
-    # print label.shape
-    # put data
-    label = [gaze_theta,gaze_phi,head_theta,head_phi]
-    label = np.array(label)
-    print idx
-    #f['data'][idx] = img
-    #f['label'][idx] = label
-
         
         
 
