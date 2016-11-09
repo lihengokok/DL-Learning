@@ -43,13 +43,13 @@ def gazeToEul(gaze):
 os.system('rm -rf  ' + train_lmdb)
 os.system('rm -rf  ' + validation_lmdb)
 
-f = h5py.File("testfile1.hdf5", "w")
+f = h5py.File("testfilet.hdf5", "w")
 dset = f.create_dataset("data", (2000, 3, IMAGE_WIDTH, IMAGE_HEIGHT), dtype='i', chunks=True)
 lset = f.create_dataset("label", (2000, 4), dtype='f8', chunks=True)
 print dset.shape, dset.size
 
 
-train_data = [img for img in glob.glob("f01/*.png")]
+train_data = [img for img in glob.glob("f02/*.png")]
 
 print 'Creating hdf5'
 
@@ -76,8 +76,9 @@ for idx, img_path in enumerate(train_data):
     gaze = (gaze_theta, gaze_phi)
 
     # concate label
-    label = np.concatenate((gaze, head_pose), axis = 0)
-
+    label = [gaze_theta, gaze_phi, head_theta, head_phi]
+    #print label
+    # print label.shape
     # put data
     f['data'][idx] = img
     f['label'][idx] = label
