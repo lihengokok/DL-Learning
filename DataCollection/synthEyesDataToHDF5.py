@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import h5py
 IMAGE_WIDTH = 120
 IMAGE_HEIGHT = 80
-train_lmdb = 'syn_train_lmdb'
-validation_lmdb = 'syn_validation_lmdb'
 
 def transform_img(img, img_width=IMAGE_WIDTH, img_height=IMAGE_HEIGHT):
 
