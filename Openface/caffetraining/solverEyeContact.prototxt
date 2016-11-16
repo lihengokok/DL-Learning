@@ -1,13 +1,13 @@
 net: "trainEyeContact.prototxt"
 test_iter: 100
 test_interval: 500
-base_lr: 0.01
+base_lr: 0.0001
 momentum: 0.9
 weight_decay: 0.0005
 lr_policy: "inv"
 gamma: 0.0001
 power: 0.75
-display: 100
+display: 40
 max_iter: 10000
 snapshot: 1000
 snapshot_prefix: "snapshot_"
