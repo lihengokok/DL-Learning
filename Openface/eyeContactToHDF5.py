@@ -9,8 +9,8 @@ from caffe.proto import caffe_pb2
 import lmdb
 import matplotlib.pyplot as plt
 import h5py
-IMAGE_WIDTH = 120
-IMAGE_HEIGHT = 80
+IMAGE_WIDTH = 140
+IMAGE_HEIGHT = 40
 
 def transform_img(img, img_width=IMAGE_WIDTH, img_height=IMAGE_HEIGHT):
 
@@ -26,6 +26,7 @@ def transform_img(img, img_width=IMAGE_WIDTH, img_height=IMAGE_HEIGHT):
 def headPoseMatrixToEul(head_pose):
     norm = np.linalg.norm(head_pose)
     #print norm
+    print head_pose
     head_pose = head_pose / norm
     print head_pose
     #print cv2.Rodrigues(head_pose)
@@ -63,7 +64,8 @@ for subdir, dirs, files in os.walk(rootdir):
         img = transform_img(img)
         img = np.expand_dims(img, axis=2)
         img = np.rollaxis(img, 2)
-
+        print img.shape
+        break
         # Read pkl
         pkl_path = img_path[:-3] + "pickle"
         pkl_input = open(pkl_path, 'rb')
@@ -87,6 +89,7 @@ for subdir, dirs, files in os.walk(rootdir):
 
         label = [eyeContact, head_theta, head_phi]
         label = np.array(label)
+
         f['data'][idx] = img
         f['label'][idx] = label
         print file
