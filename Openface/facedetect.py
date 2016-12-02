@@ -17,14 +17,11 @@ import os
 import pickle
 from headpose import findFace
 from headpose import estimatePose
-
+import multiprocessing
 
 def ang(lineA):
     vA = [(lineA[1][0]-lineA[0][0]), (lineA[1][1]-lineA[0][1]) * -1]
     return math.degrees(math.atan2(vA[1], vA[0])) * -1
-
-
-
 
 def rotateImg(img, landmarks):
     LE = landmarks[36]
@@ -86,8 +83,7 @@ def cropEyeImage(img):
     lx1 = x1
 
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    leftEyeImg = img[y1:y2, x1:x2]
-    leftEyeImg = cv2.resize(leftEyeImg, (60, 40))
+
 
     # Right eye
     width = math.ceil((landmarks[45][0] - landmarks[42][0]) * 1.65)
@@ -101,42 +97,49 @@ def cropEyeImage(img):
     y2 = int(LB[1])
 
 
+    if lx1 < 0 or x2 > 720 or y1 < 0 or y2 > 1280:
+        return None
 
-    rightEyeImg = img[y1:y2, x1:x2]
-    rightEyeImg = cv2.resize(rightEyeImg, (60, 40))
 
     bothEyeImg = img[y1:y2, lx1:x2]
     bothEyeImg = cv2.resize(bothEyeImg, (140, 40))
 
-    return (originFace, leftEyeImg, rightEyeImg, bothEyeImg)
+    return (originFace, bothEyeImg)
+
+
+def work(inputUnit):
+    file, rootdir = inputUnit
+
+    eyedir = "Eyes_" + rootdir
+    img_path = rootdir + "\\" + file
+    print img_path
+    img = cv2.imread(img_path)
+    eyeImages = cropEyeImage(img)
+    eyeimagePath = eyedir + "\\" + file
+    if eyeImages == None:
+        return False
+    cv2.imwrite(eyeimagePath, eyeImages[1])
+    rvec = estimatePose(eyeImages[0], img)
+    pickleFile = eyedir + "\\" + file[:-3] + "pickle"
+    print pickleFile
+    info = {"rot": rvec}
+    pickle.dump(info, open(pickleFile, "wb"))
+    out = pickle.load(open(pickleFile, "rb"))
+    print out["rot"]
+    return True
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--dir",
-        type = str,
-        help = "Root of images directory" 
-    )
- 
-    args = parser.parse_args()
-    rootdir = args.dir
-    eyedir = "Eyes"
 
-    for subdir, dirs, files in os.walk(rootdir):
-        for file in files:
-            img_path = rootdir + "\\" + file
-            print img_path
-            img = cv2.imread(img_path)
-            eyeImages = cropEyeImage(img)
-            eyeimagePath = eyedir + "\\" + file
-            if eyeImages == None:
-                continue
-            cv2.imwrite(eyeimagePath, eyeImages[3])
-            rvec = estimatePose(eyeImages[0], img)
-            pickleFile = eyedir + "\\" + file[:-3] + "pickle"
-            print pickleFile
-            info = {"rot": rvec}
-            pickle.dump(info, open(pickleFile, "wb"))
-            out = pickle.load(open(pickleFile, "rb"))
-            print out["rot"]
+
+    rootdirs = ["RA157", "RA159", "RA160", "RA162"]
+    for r in rootdirs:
+        rootdir = r
+        for subdir, dirs, files in os.walk(rootdir):
+            #print subdir
+            p = multiprocessing.Pool(processes = 8)
+            inputlist = []
+            for file in files:
+                inputUnit = (file, rootdir)
+                inputlist.append(inputUnit)
+            p.map(work, inputlist)
 
