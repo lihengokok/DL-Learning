@@ -17,16 +17,5 @@ for gaze = child_gaze;
     end
 end
 
-for u = unscore;
-    if ~strcmp(u.value,'eyes_not_visible');
-        continue;
-    end
-    startF = ceil(u.start * fps);
-    endF = ceil (u.stop * fps);
-    for f = startF:endF;
-        newRow = [f 2];
-        output = [output; newRow];
-    end
-end
 
 csvwrite('RA162_sn_un.csv', output)
